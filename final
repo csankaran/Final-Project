@@ -1,0 +1,216 @@
+import java.util.*;
+import java.awt.*;
+import java.io.*;
+public class CheckersGame {
+	public static void main(String[] args) {
+		DrawingPanel panel = new DrawingPanel(640, 640);
+		Graphics g = panel.getGraphics();
+		CheckersBoard game = new CheckersBoard();
+		printBoard(g, game);
+		while (!gameOver(game)) {
+		    getNextMove(panel, game);
+		    printBoard(g, game);
+		}
+		System.out.println("The winner is " + winnerIs(game));
+	}
+	
+	public static void printBoard(Graphics g, CheckersBoard game) {
+		for(int i = 0; i < 8; i++){
+			for(int j = 0; j < 8; j++){
+				if(i%2 == j%2){
+					g.setColor(Color.BLACK);
+					g.fillRect(i*80, j*80, 80, 80);
+				}
+				else{
+					g.setColor(Color.WHITE);
+					g.fillRect(i*80, j*80, 80, 80);
+				}
+			}
+		}
+		
+		for(int i = 0; i < 8; i++){
+			for(int j = 0; j < 8; j++){
+				if(game.board[i][j].getColor() == 1){
+					g.setColor(Color.RED);
+					g.fillOval(i*80 + 10, j*80+ 10, 60, 60);
+				}else if(game.board[i][j].getColor() == 2){
+					g.setColor(Color.BLUE);
+					g.fillOval(i*80 + 10, j*80+ 10, 60, 60);
+				}
+			}
+		}
+	}
+	
+	public static void getNextMove(DrawingPanel panel, CheckersBoard game){
+		boolean moved = false;
+		while (!moved) {
+			panel.setClick();
+			int startX = panel.getClickX();
+			int startY = panel.getClickY();
+			while(startX == -1){   
+				startX = panel.getClickX();
+				startY = panel.getClickY();
+			}
+			panel.setClick();
+			int endX = panel.getClickX();
+			int endY = panel.getClickY();
+			while(endX == -1){
+				endX = panel.getClickX();
+				endY = panel.getClickY();
+			}
+			panel.setClick();
+			startX = startX/80;
+			startY = startY/80;
+			endX = endX/80;
+			endY = endY/80;
+			System.out.println("(" + startX + "," + startY + ") > (" + endX + "," + endY + ")");
+			if (validMove(startX, startY, endX, endY, game)) {
+				executeMove(startX, startY, endX, endY, game);
+				moved = true;
+			}else
+				System.out.println("That was an invalid move, try again.");
+		}
+		if (game.whosemove == true)
+			game.whosemove = false;
+		else
+			game.whosemove = true;
+	 }
+	 
+	 public static boolean validMove(int xfrom, int yfrom, int xto, int yto, CheckersBoard game){
+		int check;
+		if(game.whosemove)
+			check = 1;
+		else
+			check = 2;
+		if (xfrom < 0 || xfrom > 7 || yfrom < 0 || yfrom > 7 ||
+			xto < 0 || xto > 7 || yto < 0 || yto > 7) 
+			return false;
+		else if (game.board[xfrom][yfrom].getColor() == check && game.board[xto][yto].getColor() == 0) {
+			if (Math.abs(xfrom-xto)==1) {
+				if ((game.whosemove == true) && (yto - yfrom == 1))
+				    return true;
+				else if ((game.whosemove == false) && (yto - yfrom == -1))
+				    return true;
+			    }
+			    else if (Math.abs(xfrom-xto)==2) {
+				if (game.whosemove == true && (yto - yfrom == 2) && 
+				    game.board[(xfrom+xto)/2][(yfrom+yto)/2].getColor() == 2)
+				    return true;
+				else if (game.whosemove == false && (yto - yfrom == -2) && 
+				    game.board[(xfrom+xto)/2][(yfrom+yto)/2].getColor() == 1)
+				    return true;
+			    }
+			}
+			return false;
+	 }
+	 
+	 public static void executeMove(int xfrom, int yfrom, int xto, int yto, CheckersBoard game) {
+		int check;
+		if(game.whosemove)
+			check = 1;
+		else
+			check = 2;
+		if(game.board[xfrom][yfrom].getKing()){
+			game.board[xfrom][yfrom].setKing(false);
+			game.board[xto][yto].setKing(true);
+		}
+		game.board[xfrom][yfrom].setColor(0);
+		game.board[xto][yto].setColor(check);
+		if((check == 1 && yto == 7) || (check == 2 && yto == 0)){
+			game.board[xto][yto].setKing(true);
+		}
+		if (Math.abs(xto - xfrom) == 2) {
+			game.board[(xfrom+xto)/2][(yfrom+yto)/2].setColor(0);
+			if (game.whosemove == true)
+				game.redcheckers--;
+			else
+			    game.blackcheckers--;
+		}
+	 }
+	 
+	 public static boolean gameOver(CheckersBoard game) {
+			return (game.redcheckers == 0 || game.blackcheckers == 0);
+		    }
+
+	 public static String winnerIs(CheckersBoard game) {
+		if (game.blackcheckers == 0)
+			return "blue";
+		else
+			return "red";
+		}
+}
+
+
+
+
+
+
+
+
+
+public class checkersPiece 
+{
+	private boolean king = false;
+	private int color;
+	
+	checkersPiece(int color)
+	{
+		this.color = color;
+	}
+	
+	public int getColor(){
+		return color;
+	}
+	public void setColor(int color){
+		this.color = color;
+	}
+	public boolean getKing(){
+		return king;
+	}
+	public void setKing(boolean king){
+		this.king = king;
+	}
+}
+
+
+
+
+
+
+
+
+
+import java.util.*;
+import java.io.*;
+
+public class CheckersBoard {
+	
+	public checkersPiece[][] board; 
+	public int redcheckers; 
+	public int blackcheckers; 
+	public boolean whosemove; 
+
+	public CheckersBoard() {
+		
+		board = new checkersPiece[8][8];
+	    redcheckers = 12;
+	    blackcheckers = 12;
+	    whosemove = true;
+	    
+	    for (int i = 0; i < 8; i++)
+	    	for (int j = 0; j < 8; j++)
+	    		board[i][j] = new checkersPiece(0);
+	    
+	    for (int i = 1; i < 8; i+=2){
+	    	board[i][1] = new checkersPiece(1);
+	    	board[i][5] = new checkersPiece(2);
+	    	board[i][7] = new checkersPiece(2);
+	    }
+	    
+	    for (int i = 0; i < 8; i+=2) {
+	    	board[i][0] = new checkersPiece(1);
+	    	board[i][2] = new checkersPiece(1);
+	    	board[i][6] = new checkersPiece(2);
+	    }
+	}
+}
